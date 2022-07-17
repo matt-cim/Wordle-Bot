@@ -43,8 +43,7 @@ public class Worden extends ListenerAdapter {
 //		using create default because otherwise would have to specify intent ex "listening"
 //		build can be unsuccessful thus try catch
 		try {
-			JDABuilder.createDefault("OTQ2NjAzNDQ2ODc2OTI1OTUz.GtpxCN.nLenrS"
-			+ "-VZ-aDFT41tPU4duVMKQjhavW22U76yo").addEventListeners(new Worden()).build();
+			JDABuilder.createDefault("OTQ2NjAzNDQ2ODc2OTI1OTUz.G-FB97.G07JfmKBxUOaWceZhRsotba5NGlot5FmEV4ZpY").addEventListeners(new Worden()).build();
 		} catch (Exception e) {
 			return;
 		}
