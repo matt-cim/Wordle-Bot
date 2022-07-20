@@ -14,6 +14,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -41,10 +42,12 @@ import com.opencsv.CSVWriter;
 
 public class Worden extends ListenerAdapter {
 	
-	private HashMap<String, String[]> playerInfo = new HashMap<String, String[]>();
+	private static HashMap<String, String[]> playerInfo = new HashMap<String, String[]>();
 
 	
 	public static void main (String[] args) {
+		
+		
 		
 //		using create default because otherwise would have to specify intent ex "listening"
 //		build can be unsuccessful thus try catch
@@ -54,7 +57,62 @@ public class Worden extends ListenerAdapter {
 			return;
 		}
 		
+		readCSVAndInitHash();
+		
+		for (String name: playerInfo.keySet()) {
+		    String key = name.toString();
+		    String[] value = playerInfo.get(name);
+		    System.out.println(key + " -> " + Arrays.toString(value));
+		}
 	}
+	
+	 public static void readCSVAndInitHash (){
+		 
+     	String[] stats = new String[5];
+     	String playerName;
+     	int i, j;
+     	
+     	
+	     try {
+	   
+	         // Create an object of filereader
+	         // class with CSV file as a parameter.
+	         FileReader filereader = new FileReader("src/main/java/infoCatalog.csv");
+	   
+	         try (// create csvReader object passing
+				         // file reader as a parameter
+			CSVReader csvReader = new CSVReader(filereader)) {
+				String[] nextRecord;
+   
+				 // we are going to read data line by line
+				 while ((nextRecord = csvReader.readNext()) != null) {
+					 playerName = "";
+					 i = 0;
+					 j = 0;
+				     for (String cell : nextRecord) {
+				    	 
+				    	 if (j > 0) {
+				    		 stats[i] = cell;
+				    		 i ++;
+				    	 }
+				    	 else {
+				    		 playerName = cell;
+				    	 }
+				    	 j ++;
+				        
+				     }
+				     
+				     playerInfo.put(playerName, stats);
+				   
+				 }
+				 filereader.close();
+			}
+	     }
+	     catch (Exception e) {
+	         e.printStackTrace();
+	     }
+	     
+	 }
 	
 	
 //	recognizes a message has been set in the appropriate channel and responds accordingly
@@ -75,30 +133,31 @@ public class Worden extends ListenerAdapter {
 	            String playerName = event.getAuthor().toString();
 	            
 	            
-	   		 	Pattern wordleRegex = Pattern.compile("Wordle \\d+ (1|2|3|4|5|6)\\/6.");
+	   		 	Pattern wordleRegex = Pattern.compile("[W|w]ordle (\\d+) (1|2|3|4|5|6)\\/6\\*?(\\n.*){2,}");
 	   		 	Matcher correctWordle = wordleRegex.matcher(text);
 	    
-	            
-	            if (!playerExists(playerName) && !correctWordle.matches()) {
-	            	
-	            	String[] defaultStats = {"0", "0", "0", "0", "0"};
-	            	playerInfo.put(playerName, defaultStats);
-	            	
-	            	CSVHandler csvHandler = new CSVHandler(playerName, defaultStats);
-	            	
-		            csvHandler.writeToCSV();
+            	String[] defaultStats = {"0", "0", "0", "0", "0"};
+            	playerInfo.put(playerName, defaultStats);
+            	
+            	CSVHandler csvHandler = new CSVHandler(playerName, defaultStats);
+            	
+	            csvHandler.writeToCSV();
+            	
+
+	   		 	
+	        
 		            
-		            csvHandler.readCSV();
-		                 
-		            if (text.equals("update")) {
-		            	csvHandler.updateCSV();
-		            }
-	            	
+//		            csvHandler.updateCSV("","","","",correctWordle.group(1));
+		            
+//		            if (text.equals("update")) {
+//		            	csvHandler.updateCSV("","","","",correctWordle.group(1));
+//		            }
+		        if (playerExists(playerName) && correctWordle.matches()) {
+	            	System.out.println(correctWordle.group(1));
+	            	csvHandler.updateCSV("","","","",correctWordle.group(2));
 	            }
-//	            else if (playerExists(playerName) && correctWordle.matches()) {
-//	            	System.out.println(playerInfo.get(playerName));
-//	            }
 	            
+//	            just now realizing everytime I want to run main in this class the hash map needs updated first thing
 	            
 	            System.out.println(correctWordle.matches());
 	            
@@ -108,7 +167,7 @@ public class Worden extends ListenerAdapter {
 	 }
 	 
 	 
-	 private boolean playerExists (String name) { return playerInfo.containsKey(name); }
+	 private boolean playerExists (String playerName) { return playerInfo.containsKey(playerName); }
 	 
 	 private void clearHash () { playerInfo.clear(); }
 	 

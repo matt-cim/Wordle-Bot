@@ -67,37 +67,8 @@ public class CSVHandler {
 	     
 	 }
 	 
-	 public void readCSV (){
-		   
-	     try {
-	   
-	         // Create an object of filereader
-	         // class with CSV file as a parameter.
-	         FileReader filereader = new FileReader("src/main/java/infoCatalog.csv");
-	   
-	         try (// create csvReader object passing
-				         // file reader as a parameter
-			CSVReader csvReader = new CSVReader(filereader)) {
-				String[] nextRecord;
-   
-				 // we are going to read data line by line
-				 while ((nextRecord = csvReader.readNext()) != null) {
-				     for (String cell : nextRecord) {
-				         System.out.print(cell + "\t");
-				     }
-				     System.out.println();
-				 }
-				 filereader.close();
-			}
-	     }
-	     catch (Exception e) {
-	         e.printStackTrace();
-	     }
-	     
-	 }
 	 
-	 
-	 public void updateCSV (){
+	 public void updateCSV (String gamesPlayed, String winPercentage, String currentStreak, String maxStreak, String avgGuess){
 		   
 	     try {
 	   
@@ -110,7 +81,7 @@ public class CSVHandler {
 			CSVReader csvReader = new CSVReader(filereader)) {
 	        	 
 	        	 List<String[]> csvBody = csvReader.readAll();
-	        	 csvBody.get(0)[1] = "magic";
+	        	 csvBody.get(0)[5] = avgGuess;
 	        	 filereader.close();
 	        	 
 	        	 
