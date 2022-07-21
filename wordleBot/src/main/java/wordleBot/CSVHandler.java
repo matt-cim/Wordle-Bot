@@ -12,6 +12,8 @@ import com.opencsv.CSVWriter;
 
 public class CSVHandler {
 	
+	// name is hash key, "stats" is value
+	
 	private String name;
 	private String[] stats;
 
@@ -21,30 +23,27 @@ public class CSVHandler {
 	}
 	
 	
-	
-	 public void writeToCSV () {
+	// TODO need to see how this works when other existing names are in the csv already
+	public void writeToCSV () {
 		 
-		 String[] info1 = {this.name, this.stats[0], 
+		String[] info1 = {this.name, this.stats[0], 
 				 			this.stats[1], this.stats[2], 
 				 			this.stats[3], this.stats[4]
 				 			};
 		 
-	     List<String[]> entries = new ArrayList<>();
-	     entries.add(info1);
+	    List<String[]> allStats = new ArrayList<>();
+	    allStats.add(info1);
 
 	     
 //	     https://www.geeksforgeeks.org/writing-a-csv-file-in-java-using-opencsv/
-	     File file = new File("src/main/java/infoCatalog.csv");
+	    File file = new File("src/main/java/infoCatalog.csv");
 	     
-	     try {
-	         // create FileWriter object with file as parameter
-	         FileWriter outputfile = new FileWriter(file);
-	   
-	         // create CSVWriter object filewriter object as parameter
-	         CSVWriter writer = new CSVWriter(outputfile);
-	         
-	         
-	         writer.writeAll(entries);
+	    try {
+
+	        FileWriter fileWriter = new FileWriter(file);
+	        CSVWriter csvWriter = new CSVWriter(fileWriter);
+	         	         
+	        csvWriter.writeAll(allStats);
 	   
 //	         // adding header to csv
 //	         String[] header = { "Name", "Class", "Marks" };
@@ -57,36 +56,33 @@ public class CSVHandler {
 //	         writer.writeNext(data2);
 	   
 	         // closing writer connection
-	         writer.close();
-	     }
-	     catch (IOException e) {
-	         // TODO Auto-generated catch block
-	         e.printStackTrace();
-	     }
-	     
-	     
+	        csvWriter.close();
+	    }
+	    catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	      
 	 }
 	 
 	 
-	 public void updateCSV (String gamesPlayed, String winPercentage, String currentStreak, String maxStreak, String avgGuess){
+	// TODO should have one of these updates for each field
+	public void updateCSV (String gamesPlayed, String winPercentage, String currentStreak, String maxStreak, String avgGuess){
 		   
-	     try {
+	    try {
 	   
-	         // Create an object of filereader
-	         // class with CSV file as a parameter.
-	         FileReader filereader = new FileReader("src/main/java/infoCatalog.csv");
+	        // Create an object of filereader
+	        // class with CSV file as a parameter.
+	        FileReader filereader = new FileReader("src/main/java/infoCatalog.csv");
 	   
-	         try (// create csvReader object passing
+	        try (// create csvReader object passing
 				         // file reader as a parameter
 			CSVReader csvReader = new CSVReader(filereader)) {
 	        	 
-	        	 List<String[]> csvBody = csvReader.readAll();
-	        	 csvBody.get(0)[5] = avgGuess;
-	        	 filereader.close();
+	        	List<String[]> csvBody = csvReader.readAll();
+	        	csvBody.get(0)[5] = avgGuess;
+	        	filereader.close();
 	        	 
-	        	 
-	        	 
-	    	     File file = new File("src/main/java/infoCatalog.csv");
+	        	  File file = new File("src/main/java/infoCatalog.csv");
 	    	     
 	    	     try {
 	    	         // create FileWriter object with file as parameter
@@ -111,8 +107,7 @@ public class CSVHandler {
 	    	         // closing writer connection
 	    	         writer.close();
 	    	     }
-	    	     catch (IOException e) {
-	    	         // TODO Auto-generated catch block
+	    	     catch (Exception e) {
 	    	         e.printStackTrace();
 	    	     }
 	        	 
@@ -122,7 +117,6 @@ public class CSVHandler {
 	         e.printStackTrace();
 	     }
 	 }
-	 
 	 
 	 
 }
