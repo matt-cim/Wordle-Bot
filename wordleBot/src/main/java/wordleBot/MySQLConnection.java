@@ -30,7 +30,7 @@ public class MySQLConnection {
 	// would execute this if player DNE in hash and joins channel, sets default stats
 	// note want this when a new player JOINS, NOT sends first message
 	public void addPlayerToDatabase(String playerName) throws SQLException {
-		String sql = "INSERT INTO info_catalog (name, games_played, win_percentage, current_streak, max_streak, last_fourteen, best_score, median, mode, standard_deviation, wins) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+		String sql = "INSERT INTO info_catalog (name, games_played, win_percentage, current_streak, max_streak, last_fourteen, best_score, median, mode, standard_deviation, wins, last_wordle) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
 		//String sql = "INSERT INTO info_catalog VALUES (" + playerName + ", '0', '101.1', '0', '0', 'NULL', '0', '0', '0', '1001')";
 		
 		// using a prepared statement to avoid SQL injection attack
@@ -46,6 +46,7 @@ public class MySQLConnection {
 		prepStatement.setInt(9, 0);
 		prepStatement.setInt(10, 1001);
 		prepStatement.setInt(11, 0);
+		prepStatement.setInt(12, 0);
 		
 
 		prepStatement.executeUpdate();

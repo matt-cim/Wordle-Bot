@@ -102,9 +102,10 @@ public class Worden extends ListenerAdapter {
 				String mode = String.valueOf(resultSet.getInt("mode"));
 				String standardDev = String.valueOf(resultSet.getDouble("standard_deviation"));
 				String wins = String.valueOf(resultSet.getInt("wins"));
+				String lastWordle = String.valueOf(resultSet.getInt("last_wordle"));
 				
 				String[] stats = {gamesPlayed, winPercentage, currentStreak, maxStreak, 
-									lastFourteen, bestScore, median, mode, standardDev, wins};
+									lastFourteen, bestScore, median, mode, standardDev, wins, lastWordle};
 				
 				
 				playerInfo.put(playerName, stats);
@@ -185,7 +186,7 @@ public class Worden extends ListenerAdapter {
 	// init -> initialize
 	public static void initNewPlayer(String playerName) throws SQLException {
 		
-   		String[] defaultStats = {"0", "101.1", "0", "0", "NULL", "0", "0", "0", "1001", "0"};
+   		String[] defaultStats = {"0", "101.1", "0", "0", "NULL", "0", "0", "0", "1001", "0", "0"};
    		playerInfo.put(playerName, defaultStats);
    		
    		// both data base and hash map are adding this player
@@ -210,8 +211,6 @@ public class Worden extends ListenerAdapter {
 		if (!event.getAuthor().isBot() && correctChannel.matches()) {
 		
 			String text = event.getMessage().getContentRaw(); 
-	        channel.sendMessage("I have recieved your Wordle").queue();
-	     
 	        String playerName = event.getMember().getUser().getAsTag();  
 	            
 	        // match standard Wordle format
@@ -219,7 +218,11 @@ public class Worden extends ListenerAdapter {
 	   		Matcher correctWordle = wordleRegex.matcher(text);
 	   		
 	   		if (correctWordle.matches()) {
+	   			channel.sendMessage("I have recieved your Wordle").queue();
 	   			filter(correctWordle.group(1), correctWordle.group(2), playerName);
+	   		}
+	   		else if (text.equals("!myStats")) {
+	   			//begin embed stuff
 	   		}
 	            	            
 		} 
@@ -230,7 +233,10 @@ public class Worden extends ListenerAdapter {
 	private static void filter (String gameNumber, String score, String playerName) {
 		System.out.println(score);
 		// have to add myself into database before games start
+		// gonna want an initial check of if the gameNumber makes sense
+		
 		String[] statsArr = playerInfo.get(playerName);
+		boolean wonGame = !score.equals("X");
 		 
 		// again, update hash then database for runtime sake
 		
@@ -239,37 +245,75 @@ public class Worden extends ListenerAdapter {
 		statsArr[0] = gamesPlayed.toString();
 		
 		// win % & wins
-		Double currWinPercentage = Double.parseDouble(statsArr[1]);
-		Integer wins = Integer.parseInt(statsArr[9]) + 1;
-		Double winPercentage = (double) (wins / gamesPlayed) * 100.0;
+		Double winPercentage;
+		Integer wins;
+		double doublePlayed = gamesPlayed;
+		double doubleWins;
 		
-		if (!score.equals("X")) {
+		if (wonGame) {
+			wins = Integer.parseInt(statsArr[9]) + 1;
 			statsArr[9] = wins.toString();
-		}
-		
-		// player actually won wordle
-		if ((!score.equals("X") && winPercentage > currWinPercentage) 
-				|| (!score.equals("X") && currWinPercentage == 101.1)) {
+			doubleWins = wins;
+			winPercentage = (doubleWins / doublePlayed) * 100.0;
 			statsArr[1] = winPercentage.toString();
 		}
+		else {
+			wins = Integer.parseInt(statsArr[9]);
+			doubleWins = wins;
+			winPercentage = (doubleWins / doublePlayed) * 100.0;
+			statsArr[1] = winPercentage.toString();
+		}
+		
+				
+		// current streak & max streak, needed to add another column- last wordle
+		Integer lastWordle = Integer.parseInt(statsArr[10]);
+		Integer thisWordle = Integer.parseInt(gameNumber);
+		statsArr[10] = gameNumber;
+		Integer streak = Integer.parseInt(statsArr[2]) + 1;
+		
+		if ((thisWordle - lastWordle == 1) ||  lastWordle == 0) {
+			statsArr[2] = streak.toString();
+			Integer currMaxStreak = Integer.parseInt(statsArr[3]);
+			
+			if (currMaxStreak < streak) {
+				statsArr[3] = streak.toString();
+			}
+		}
+		else {
+			statsArr[2] = "0";
+		}
+
+		
+		// last fourteen guesses
+		String lastFourteen = statsArr[4];
+		
+		if (lastFourteen.equals("NULL")) {
+			statsArr[4] = score + "-";
+		}
+		else {
+			String currStats = statsArr[4] + score + "-";
+			statsArr[4] = currStats;
+		}
+		
+		
+		// best score
+		Integer currBestScore = Integer.parseInt(statsArr[5]);
+		Integer currScore;
+		if (currBestScore == 0 && wonGame) {
+			currScore = Integer.parseInt(score);
+			statsArr[5] = currScore.toString();;
+		}
+		else if (wonGame) {
+			currScore = Integer.parseInt(score);
+			if (currScore < currBestScore) {
+				statsArr[5] = currScore.toString();
+			}
+		}
+
 	
-		printHash();
-//		
-//		// current streak
-//		Integer currentStreak = Integer.parseInt(statsArr[2]) + 1;
-//		statsArr[0] = gamesPlayed.toString();
-//		
-//		// max_streak
-//		Integer gamesPlayed = Integer.parseInt(statsArr[0]) + 1;
-//		statsArr[0] = gamesPlayed.toString();
-//		
-//		// last fourteen guesses
-//		
-//		
-//		// best score
-//		Integer gamesPlayed = Integer.parseInt(statsArr[0]) + 1;
-//		statsArr[0] = gamesPlayed.toString();
-//		
+		
+		// only do these stats for wins meaning dont include the X shit
+		// need to add an average score column
 //		// median
 //		Integer gamesPlayed = Integer.parseInt(statsArr[0]) + 1;
 //		statsArr[0] = gamesPlayed.toString();
@@ -282,6 +326,7 @@ public class Worden extends ListenerAdapter {
 //		Double winPercentage = Double.parseDouble(statsArr[1]);
 //		
 				
+		printHash();
 				//updateDatabaseGamesPlayed(String gamesPlayed, String playerName)
 	}
 	 
