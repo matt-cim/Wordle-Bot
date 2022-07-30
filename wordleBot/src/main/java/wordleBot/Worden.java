@@ -163,6 +163,9 @@ public class Worden extends ListenerAdapter {
 
         derivedChannel.sendMessage(botResponse).queue();
         System.out.println("Player" + event.getMember().getUser().getAsTag() + "has joined");
+        
+        event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById("994624121050763314")).queue();
+        System.out.println("Player" + event.getMember().getUser().getAsTag() + "has role updated");
 	}
 
 
