@@ -8,14 +8,23 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageHistory;
 import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.ReadyEvent;
+import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,6 +32,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
+
+import com.mysql.cj.xdevapi.Statement;
 //https://zetcode.com/java/opencsv/
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
@@ -45,21 +57,69 @@ public class Worden extends ListenerAdapter {
 	
 	// main data structure for users and respective statistics	
 	private static HashMap<String, String[]> playerInfo = new HashMap<String, String[]>();
-	
+	private static Connection connection = null;
 
 	
 	public static void main (String[] args) {
+		
+		// gets every column from the table
+		String sql = "SELECT * " + "FROM info_catalog";
+
 	
 		// using create default because otherwise would have to specify intent ex "listening"
 		try {
-			JDABuilder.createDefault("OTQ2NjAzNDQ2ODc2OTI1OTUz.G-FB97.G07JfmKBxUOaWceZhRsotba5NGlot5FmEV4ZpY").addEventListeners(new Worden()).build();
+			JDABuilder.createDefault("OTQ2NjAzNDQ2ODc2OTI1OTUz.G-FB97.G07JfmKBxUOaWceZhRsotba5NGlot5FmEV4ZpY")
+			.enableIntents(GatewayIntent.GUILD_MEMBERS).addEventListeners(new Worden()).build();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
-		System.out.println("Main finished running");
 		
-//		readCSVAndUpdateHash();
+		// https://stackoverflow.com/questions/8146793/no-suitable-driver-found-for-jdbcmysql-localhost3306-mysql
+		// https://stackoverflow.com/questions/17484764/java-lang-classnotfoundexception-com-mysql-jdbc-driver-in-eclipse
+		// https://www.youtube.com/watch?v=BjfqKK24Ruk
+		// 	loading the driver
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			String dbURL = "jdbc:mysql://customer_338853_wordendb:Ovechkin8$$@na02-sql.pebblehost.com/customer_338853_wordendb";
+			String username = "customer_338853_wordendb";
+			String password = "Ovechkin8$$";
+			connection = DriverManager.getConnection(dbURL, username, password);
+			
+			java.sql.Statement statement = connection.createStatement();
+			ResultSet resultSet = statement.executeQuery(sql);
+			
+			while (resultSet.next()) {
+				String playerName = resultSet.getString("name");
+				String gamesPlayed = String.valueOf(resultSet.getInt("games_played"));
+				String winPercentage = String.valueOf(resultSet.getDouble("win_percentage"));
+				String currentStreak = String.valueOf(resultSet.getInt("current_streak"));
+				String maxStreak = String.valueOf(resultSet.getInt("max_streak"));
+				String lastFourteen = resultSet.getString("last_fourteen");
+				String bestScore = String.valueOf(resultSet.getInt("best_score"));
+				String median = String.valueOf(resultSet.getInt("median"));
+				String mode = String.valueOf(resultSet.getInt("mode"));
+				String standardDev = String.valueOf(resultSet.getDouble("standard_deviation"));
+				
+				String[] stats = {gamesPlayed, winPercentage, currentStreak, maxStreak, 
+									lastFourteen, bestScore, median, mode, standardDev};
+				
+				
+				playerInfo.put(playerName, stats);
+			}
+
+			
+			resultSet.close();
+			statement.close();
+			connection.close();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}	
+		
+		
+		System.out.println("Main finished running");
 		
 		printHash();
 	}
@@ -85,49 +145,40 @@ public class Worden extends ListenerAdapter {
 	}
 	
 	
-	// imperative on bot start as server crash would reset hash
-	public static void readCSVAndUpdateHash () { 
-		 	
-     	int i, j; 
-		String[] stats = new String[5];
-     	String playerName;
+	@Override
+	public void onGuildMemberJoin(GuildMemberJoinEvent event) {
+		
+        final List<TextChannel> channelList = event.getGuild().getTextChannelsByName
+        												("let-the-games-begin", true);
+        
+        if (channelList.isEmpty()) {
+        	System.out.println("Could not find the right channel");
+            return;
+        }
 
-     	
-	     try {
-	   
-	    	 FileReader filereader = new FileReader("C:\\Users\\Matthew Cimerola\\Documents\\infoCatalog.csv");
-	   
-	         try (CSVReader csvReader = new CSVReader(filereader)) {
-	        	 // read each line of CSV and parse so that user name and statistics are separate
-	        	 String[] nextLine;
-   
-				 while ((nextLine = csvReader.readNext()) != null) {
-					 playerName = "";
-					 i = 0;
-					 j = 0;
-					 
-				     for (String cell : nextLine) {
-				    	 
-				    	 if (j > 0) {
-				    		 stats[i] = cell;
-				    		 i ++;
-				    	 }
-				    	 else {
-				    		 playerName = cell;
-				    	 }
-				    	 j ++;
-				     }
-				     // final step, key and value have been initialized
-				     playerInfo.put(playerName, stats);  
-				 }
-				 filereader.close();
-			}
-	     }
-	     catch (Exception e) {
-	         e.printStackTrace();
-	     }
-	     
-	 }
+        final TextChannel derivedChannel = channelList.get(0);
+
+        final String botResponse = String.format("Welcome %s to the %s",
+                event.getMember().getUser().getAsTag(), event.getGuild().getName());
+
+        derivedChannel.sendMessage(botResponse).queue();
+        System.out.println("Player" + event.getMember().getUser().getAsTag() + "has joined");
+	}
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	 //	recognizes a message has been set in the appropriate channel and responds accordingly
@@ -154,10 +205,6 @@ public class Worden extends ListenerAdapter {
 	   		String[] defaultStats = {"0", "0", "0", "0", "0"};
 	   		playerInfo.put(playerName, defaultStats);
             	
-	   		CSVHandler csvHandler = new CSVHandler(playerName, defaultStats);
-            	
-	   		csvHandler.writeToCSV();
-            
 		            
 //		            if (text.equals("update")) {
 //		            	csvHandler.updateCSV("","","","",correctWordle.group(1));
@@ -165,15 +212,12 @@ public class Worden extends ListenerAdapter {
 	   		 
 	   		if (playerExists(playerName) && correctWordle.matches()) {
 	   			System.out.println(correctWordle.group(1));
-	   			csvHandler.updateCSV("","","","",correctWordle.group(2));
 	   		}
 	            	            
 	   		System.out.println(correctWordle.matches());     
 		 }
 		else if (channel.getName().equals("tester")) {			  
-			  MessageHistory history = MessageHistory.getHistoryFromBeginning(channel).complete();
-			  List<Message> mess = history.getRetrievedHistory();
-			  System.out.println(mess);
+
 		}
 	        
 	 }

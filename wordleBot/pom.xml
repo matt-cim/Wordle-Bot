@@ -28,7 +28,17 @@
   			<artifactId>opencsv</artifactId>
   			<version>5.6</version>
 		</dependency>
+		
+		<!-- needed for build path, the sql connection -->
+		<dependency>
+    		<groupId>mysql</groupId>
+    		<artifactId>mysql-connector-java</artifactId>
+    		<version>8.0.29</version>
+		</dependency>
+		
     </dependencies>
+    
+  
     
     
 
