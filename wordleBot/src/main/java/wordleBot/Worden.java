@@ -89,6 +89,7 @@ public class Worden extends ListenerAdapter {
 			java.sql.Statement statement = connection.createStatement();
 			ResultSet resultSet = statement.executeQuery(sql);
 			
+			// iterate all rows of the table
 			while (resultSet.next()) {
 				String playerName = resultSet.getString("name");
 				String gamesPlayed = String.valueOf(resultSet.getInt("games_played"));
@@ -100,15 +101,16 @@ public class Worden extends ListenerAdapter {
 				String median = String.valueOf(resultSet.getInt("median"));
 				String mode = String.valueOf(resultSet.getInt("mode"));
 				String standardDev = String.valueOf(resultSet.getDouble("standard_deviation"));
+				String wins = String.valueOf(resultSet.getInt("wins"));
 				
 				String[] stats = {gamesPlayed, winPercentage, currentStreak, maxStreak, 
-									lastFourteen, bestScore, median, mode, standardDev};
+									lastFourteen, bestScore, median, mode, standardDev, wins};
 				
 				
 				playerInfo.put(playerName, stats);
 			}
 
-			
+			// close all connections
 			resultSet.close();
 			statement.close();
 			connection.close();
@@ -125,28 +127,27 @@ public class Worden extends ListenerAdapter {
 	}
 	
 	
-
+	// have not yet seen it to be necessary
 	@Override
-	public void onReady(ReadyEvent e) {
-
-	  System.out.println("Worden bot is up and running!");
-	  
-	}
+	public void onReady(ReadyEvent e) { System.out.println("Worden bot is up and running!"); }
 	
 	
+	// helpful when making sure Query took place successfully
 	private static void printHash () {
 		
 		for (String name: playerInfo.keySet()) {
 		    String key = name.toString();
 		    String[] value = playerInfo.get(name);
-		    System.out.println(key + " -> " + Arrays.toString(value) + "\n");
+		    System.out.println(key + " -> " + Arrays.toString(value));
 		}
-		
+		System.out.println("\n");
 	}
 	
 	
+	// new player joins server & channel, respond and auto assign role
 	@Override
 	public void onGuildMemberJoin(GuildMemberJoinEvent event) {
+		
 		
         final List<TextChannel> channelList = event.getGuild().getTextChannelsByName
         												("let-the-games-begin", true);
@@ -156,77 +157,136 @@ public class Worden extends ListenerAdapter {
             return;
         }
 
-        final TextChannel derivedChannel = channelList.get(0);
+        final TextChannel derivedChannel = channelList.get(0); 
+        final String playerName =  event.getMember().getUser().getAsTag();
+        
+        // adds "player" role
+        event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById("994624121050763314")).queue();
+        System.out.println("Player" + playerName + " has role updated");
 
         final String botResponse = String.format("Welcome %s to the %s",
-                event.getMember().getUser().getAsTag(), event.getGuild().getName());
+        		playerName, event.getGuild().getName());
 
         derivedChannel.sendMessage(botResponse).queue();
-        System.out.println("Player" + event.getMember().getUser().getAsTag() + "has joined");
+        System.out.println("Player " + playerName + " has joined");
         
-        event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById("994624121050763314")).queue();
-        System.out.println("Player" + event.getMember().getUser().getAsTag() + "has role updated");
+        
+        // init. default stats for this new player, only if person is not in hash (hasnt left server then joined again)
+        try {
+			if (!playerExists(playerName)) {
+				initNewPlayer(playerName);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
+	
+	// init -> initialize
+	public static void initNewPlayer(String playerName) throws SQLException {
+		
+   		String[] defaultStats = {"0", "101.1", "0", "0", "NULL", "0", "0", "0", "1001", "0"};
+   		playerInfo.put(playerName, defaultStats);
+   		
+   		// both data base and hash map are adding this player
+   		MySQLConnection task = new MySQLConnection();
+   		task.addPlayerToDatabase(playerName);
+   		task.closeConnection();	
+	}
+	
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	 //	recognizes a message has been set in the appropriate channel and responds accordingly
 	@Override
 	public void onMessageReceived (MessageReceivedEvent event) {
 		 
+		// filter channel
 		MessageChannel channel = event.getChannel();
 		Pattern regex = Pattern.compile(".*let-the-games-begin.*");
 		Matcher correctChannel = regex.matcher(channel.getName());
 
 	
+		// message from non-bot user
 		if (!event.getAuthor().isBot() && correctChannel.matches()) {
-			 
-			// getMessage() has other misc info, but must extract raw content
+		
 			String text = event.getMessage().getContentRaw(); 
 	        channel.sendMessage("I have recieved your Wordle").queue();
+	     
+	        String playerName = event.getMember().getUser().getAsTag();  
 	            
-	        String playerName = event.getAuthor().toString();
-	            
-	            
-	   		Pattern wordleRegex = Pattern.compile("[W|w]ordle (\\d+) (1|2|3|4|5|6)\\/6\\*?(\\n.*){2,}");
+	        // match standard Wordle format
+	   		Pattern wordleRegex = Pattern.compile("[W|w]ordle (\\d+) (1|2|3|4|5|6|X)\\/6\\*?(\\n.*){2,}");
 	   		Matcher correctWordle = wordleRegex.matcher(text);
-	   		 
-	   		String[] defaultStats = {"0", "0", "0", "0", "0"};
-	   		playerInfo.put(playerName, defaultStats);
-            	
-		            
-//		            if (text.equals("update")) {
-//		            	csvHandler.updateCSV("","","","",correctWordle.group(1));
-//		            }
-	   		 
-	   		if (playerExists(playerName) && correctWordle.matches()) {
-	   			System.out.println(correctWordle.group(1));
+	   		
+	   		if (correctWordle.matches()) {
+	   			filter(correctWordle.group(1), correctWordle.group(2), playerName);
 	   		}
 	            	            
-	   		System.out.println(correctWordle.matches());     
-		 }
-		else if (channel.getName().equals("tester")) {			  
-
-		}
-	        
+		} 
 	 }
-	 
+
+	
+	// decides how to update each of the stats given a new games' been played
+	private static void filter (String gameNumber, String score, String playerName) {
+		System.out.println(score);
+		// have to add myself into database before games start
+		String[] statsArr = playerInfo.get(playerName);
+		 
+		// again, update hash then database for runtime sake
+		
+		// games played
+		Integer gamesPlayed = Integer.parseInt(statsArr[0]) + 1;
+		statsArr[0] = gamesPlayed.toString();
+		
+		// win % & wins
+		Double currWinPercentage = Double.parseDouble(statsArr[1]);
+		Integer wins = Integer.parseInt(statsArr[9]) + 1;
+		Double winPercentage = (double) (wins / gamesPlayed) * 100.0;
+		
+		if (!score.equals("X")) {
+			statsArr[9] = wins.toString();
+		}
+		
+		// player actually won wordle
+		if ((!score.equals("X") && winPercentage > currWinPercentage) 
+				|| (!score.equals("X") && currWinPercentage == 101.1)) {
+			statsArr[1] = winPercentage.toString();
+		}
+	
+		printHash();
+//		
+//		// current streak
+//		Integer currentStreak = Integer.parseInt(statsArr[2]) + 1;
+//		statsArr[0] = gamesPlayed.toString();
+//		
+//		// max_streak
+//		Integer gamesPlayed = Integer.parseInt(statsArr[0]) + 1;
+//		statsArr[0] = gamesPlayed.toString();
+//		
+//		// last fourteen guesses
+//		
+//		
+//		// best score
+//		Integer gamesPlayed = Integer.parseInt(statsArr[0]) + 1;
+//		statsArr[0] = gamesPlayed.toString();
+//		
+//		// median
+//		Integer gamesPlayed = Integer.parseInt(statsArr[0]) + 1;
+//		statsArr[0] = gamesPlayed.toString();
+//		
+//		// mode
+//		Integer gamesPlayed = Integer.parseInt(statsArr[0]) + 1;
+//		statsArr[0] = gamesPlayed.toString();
+//		
+//		// standard deviation
+//		Double winPercentage = Double.parseDouble(statsArr[1]);
+//		
+				
+				//updateDatabaseGamesPlayed(String gamesPlayed, String playerName)
+	}
 	 
 	 private boolean playerExists (String playerName) { return playerInfo.containsKey(playerName); }
+	 
 	 
 	 private void clearHash () { playerInfo.clear(); }
 	 
