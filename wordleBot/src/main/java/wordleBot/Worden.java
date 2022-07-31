@@ -27,6 +27,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -271,7 +272,7 @@ public class Worden extends ListenerAdapter {
 		statsArr[10] = gameNumber;
 		Integer streak = Integer.parseInt(statsArr[2]) + 1;
 		
-		if ((thisWordle - lastWordle == 1) ||  lastWordle == 0) {
+		if ((thisWordle - lastWordle == 1) ||  lastWordle == 0 || statsArr[2].equals("0")) {
 			statsArr[2] = streak.toString();
 			Integer currMaxStreak = Integer.parseInt(statsArr[3]);
 			
@@ -281,18 +282,6 @@ public class Worden extends ListenerAdapter {
 		}
 		else {
 			statsArr[2] = "0";
-		}
-
-		
-		// last fourteen guesses
-		String lastFourteen = statsArr[4];
-		
-		if (lastFourteen.equals("NULL")) {
-			statsArr[4] = score + "-";
-		}
-		else {
-			String currStats = statsArr[4] + score + "-";
-			statsArr[4] = currStats;
 		}
 		
 		
@@ -311,29 +300,95 @@ public class Worden extends ListenerAdapter {
 		}
 
 	
+		dataSetComputation(statsArr, score);	
+				
+		printHash();
+		//updateDatabaseGamesPlayed(String gamesPlayed, String playerName)
+	}
+	
+	
+	// performs computation that require the last <= 14 Wordle submissions of a user
+	private static void dataSetComputation (String[] statsArr, String score) {
+		// last fourteen guesses
+		String lastFourteen = statsArr[4];
+		
+		if (lastFourteen.equals("NULL")) {
+			statsArr[4] = score + "-";
+		}
+		else {
+			String currStats = statsArr[4] + score + "-";
+			statsArr[4] = currStats;
+		}
+		
+		String noNullScores = new String();
+		noNullScores = statsArr[4].replaceAll("X","");
+		
+		String[] splitScores = noNullScores.split("-");
+		
+		Integer singleScore;
+		int sum = 0;
+		double doubleSum = 0;
+		double averageScore;
+		List<Integer> noEmptyStrings = new ArrayList<>();
+		
+		for (int i = 0; i < splitScores.length; i ++) {
+			if (!splitScores[i].equals("X")&& !splitScores[i].equals("")) {
+				singleScore = Integer.parseInt(splitScores[i]);
+				noEmptyStrings.add(singleScore);
+				sum += singleScore;
+			}
+		}
+		
+		//TODO
+		// havent implemented average into data structures yet
+		doubleSum = sum;
+		averageScore = doubleSum / noEmptyStrings.size();
+		
 		
 		// only do these stats for wins meaning dont include the X shit
 		// need to add an average score column
-//		// median
-//		Integer gamesPlayed = Integer.parseInt(statsArr[0]) + 1;
-//		statsArr[0] = gamesPlayed.toString();
-//		
-//		// mode
-//		Integer gamesPlayed = Integer.parseInt(statsArr[0]) + 1;
-//		statsArr[0] = gamesPlayed.toString();
+		Collections.sort(noEmptyStrings);
+		// median
+		if (noEmptyStrings.size() > 0) {
+			int medianValue = 0; 
+			int middle = noEmptyStrings.size() / 2;
+			if (noEmptyStrings.size() % 2 == 1) {
+			    medianValue = noEmptyStrings.get(middle);
+			}
+			else {
+			   medianValue = (noEmptyStrings.get(middle - 1) + noEmptyStrings.get(middle)) / 2;
+			}
+			Integer median = medianValue;
+			statsArr[6] = median.toString();
+			
+			// mode
+			int count = 0;
+			Integer mode = 0;
+			
+			for (int j = 1; j <= 6; j ++) {
+				
+				count = Collections.frequency(noEmptyStrings, j);
+				
+				if (count > mode) {
+					mode = j;
+				}
+				
+			}
+			statsArr[7] = mode.toString();
+		}
+		
+
+	
 //		
 //		// standard deviation
 //		Double winPercentage = Double.parseDouble(statsArr[1]);
-//		
-				
-		printHash();
-				//updateDatabaseGamesPlayed(String gamesPlayed, String playerName)
+	
 	}
 	 
-	 private boolean playerExists (String playerName) { return playerInfo.containsKey(playerName); }
+	private boolean playerExists (String playerName) { return playerInfo.containsKey(playerName); }
 	 
 	 
-	 private void clearHash () { playerInfo.clear(); }
+	private void clearHash () { playerInfo.clear(); }
 	 
 
 	 
