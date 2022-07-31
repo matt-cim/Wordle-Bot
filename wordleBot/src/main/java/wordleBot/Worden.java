@@ -1,5 +1,6 @@
 package wordleBot;
 
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -16,6 +17,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -222,8 +224,24 @@ public class Worden extends ListenerAdapter {
 	   			channel.sendMessage("I have recieved your Wordle").queue();
 	   			filter(correctWordle.group(1), correctWordle.group(2), playerName);
 	   		}
-	   		else if (text.equals("!myStats")) {
+	   		else if (text.equals("!testicles")) {
+	   			String[] statsArr = playerInfo.get(playerName);
 	   			//begin embed stuff
+	   			EmbedBuilder builder = new EmbedBuilder();
+	   			builder.setTitle("Here are all your Wordle statistics");
+	   		    builder.addField("Games Played", statsArr[0], true);
+	   		    builder.addField("Win Percentage", statsArr[1], true);
+	   		    builder.addField("Current Streak", statsArr[2], true);
+	   		    builder.addField("Max Streak", statsArr[3], true);
+	   			builder.addField("History", statsArr[4], true);
+	   			builder.addField("Best Score", statsArr[5], true);
+	   			builder.addField("Median", statsArr[6], true);
+	   			builder.addField("Mode", statsArr[7], true);
+	   			builder.addField("Wins", statsArr[9], true);
+	   			builder.addField("Last Wordle", statsArr[10], true);
+//	   		    builder.addBlankField(false);
+//	   		    builder.setFooter("Text");
+	   			channel.sendMessageEmbeds(builder.build()).queue();
 	   		}
 	            	            
 		} 
