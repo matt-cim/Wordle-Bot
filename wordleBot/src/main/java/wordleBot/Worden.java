@@ -106,9 +106,10 @@ public class Worden extends ListenerAdapter {
 				String standardDev = String.valueOf(resultSet.getDouble("standard_deviation"));
 				String wins = String.valueOf(resultSet.getInt("wins"));
 				String lastWordle = String.valueOf(resultSet.getInt("last_wordle"));
+				String average = String.valueOf(resultSet.getDouble("average"));
 				
 				String[] stats = {gamesPlayed, winPercentage, currentStreak, maxStreak, 
-									lastFourteen, bestScore, median, mode, standardDev, wins, lastWordle};
+									lastFourteen, bestScore, median, mode, standardDev, wins, lastWordle, average};
 				
 				
 				playerInfo.put(playerName, stats);
@@ -189,7 +190,7 @@ public class Worden extends ListenerAdapter {
 	// init -> initialize
 	public static void initNewPlayer(String playerName) throws SQLException {
 		
-   		String[] defaultStats = {"0", "101.1", "0", "0", "NULL", "0", "0", "0", "1001", "0", "0"};
+   		String[] defaultStats = {"0", "0.0", "0", "0", "NULL", "0", "0", "0", "0.0", "0", "0", "0.0"};
    		playerInfo.put(playerName, defaultStats);
    		
    		// both data base and hash map are adding this player
@@ -239,6 +240,7 @@ public class Worden extends ListenerAdapter {
 	   			builder.addField("Mode", statsArr[7], true);
 	   			builder.addField("Wins", statsArr[9], true);
 	   			builder.addField("Last Wordle", statsArr[10], true);
+	   			builder.addField("Average", statsArr[11], true);
 //	   		    builder.addBlankField(false);
 //	   		    builder.setFooter("Text");
 	   			channel.sendMessageEmbeds(builder.build()).queue();
@@ -251,6 +253,8 @@ public class Worden extends ListenerAdapter {
 	// decides how to update each of the stats given a new games' been played
 	private static void filter (String gameNumber, String score, String playerName) {
 		System.out.println(score);
+		
+		// TODO
 		// have to add myself into database before games start
 		// gonna want an initial check of if the gameNumber makes sense
 		
@@ -346,11 +350,11 @@ public class Worden extends ListenerAdapter {
 		Integer singleScore;
 		int sum = 0;
 		double doubleSum = 0;
-		double averageScore;
+		Double averageScore;
 		List<Integer> noEmptyStrings = new ArrayList<>();
 		
 		for (int i = 0; i < splitScores.length; i ++) {
-			if (!splitScores[i].equals("X")&& !splitScores[i].equals("")) {
+			if (!splitScores[i].equals("X") && !splitScores[i].equals("")) {
 				singleScore = Integer.parseInt(splitScores[i]);
 				noEmptyStrings.add(singleScore);
 				sum += singleScore;
@@ -361,6 +365,7 @@ public class Worden extends ListenerAdapter {
 		// havent implemented average into data structures yet
 		doubleSum = sum;
 		averageScore = doubleSum / noEmptyStrings.size();
+		statsArr[11] = averageScore.toString();
 		
 		
 		// only do these stats for wins meaning dont include the X shit
@@ -379,15 +384,18 @@ public class Worden extends ListenerAdapter {
 			Integer median = medianValue;
 			statsArr[6] = median.toString();
 			
+			
+			// TODO test this, think i fixed it?
 			// mode
-			int count = 0;
+			int count = 0, countCheck = 0;
 			Integer mode = 0;
 			
 			for (int j = 1; j <= 6; j ++) {
 				
 				count = Collections.frequency(noEmptyStrings, j);
 				
-				if (count > mode) {
+				if (count > countCheck) {
+					countCheck = count;
 					mode = j;
 				}
 				
@@ -397,10 +405,14 @@ public class Worden extends ListenerAdapter {
 		
 
 	
-//		
+//		TODO
 //		// standard deviation
-//		Double winPercentage = Double.parseDouble(statsArr[1]);
-	
+//		Double winPercentage = Double.parseDouble(statsArr[8]);
+		
+		
+		// TODO now update database
+		// remember that user is added to database when they join the server ie their stats would be set if
+		// they previously had stuff in the server... wait dumbass you already accounted for this see line 179
 	}
 	 
 	private boolean playerExists (String playerName) { return playerInfo.containsKey(playerName); }
@@ -408,11 +420,5 @@ public class Worden extends ListenerAdapter {
 	 
 	private void clearHash () { playerInfo.clear(); }
 	 
-
-	 
-//TODO 1. auto assign permissions on join
-//	 	2. create separate method for each statistics one by one, add more indices for other stats, get inspiration from no longer existing wordle stats bot
-//      3. test adding other members and reading multiple lines for hash initialization
-
 	
 }

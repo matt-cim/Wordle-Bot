@@ -30,23 +30,24 @@ public class MySQLConnection {
 	// would execute this if player DNE in hash and joins channel, sets default stats
 	// note want this when a new player JOINS, NOT sends first message
 	public void addPlayerToDatabase(String playerName) throws SQLException {
-		String sql = "INSERT INTO info_catalog (name, games_played, win_percentage, current_streak, max_streak, last_fourteen, best_score, median, mode, standard_deviation, wins, last_wordle) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+		String sql = "INSERT INTO info_catalog (name, games_played, win_percentage, current_streak, max_streak, last_fourteen, best_score, median, mode, standard_deviation, wins, last_wordle, average) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		//String sql = "INSERT INTO info_catalog VALUES (" + playerName + ", '0', '101.1', '0', '0', 'NULL', '0', '0', '0', '1001')";
 		
 		// using a prepared statement to avoid SQL injection attack
 		PreparedStatement prepStatement = connection.prepareStatement(sql);
 		prepStatement.setString(1, playerName);
 		prepStatement.setInt(2, 0);
-		prepStatement.setDouble(3, 101.1);
+		prepStatement.setDouble(3, 0.0);
 		prepStatement.setInt(4, 0);
 		prepStatement.setInt(5, 0);
 		prepStatement.setString(6, "NULL");
 		prepStatement.setInt(7, 0);
 		prepStatement.setInt(8, 0);
 		prepStatement.setInt(9, 0);
-		prepStatement.setInt(10, 1001);
+		prepStatement.setDouble(10, 0.0);
 		prepStatement.setInt(11, 0);
 		prepStatement.setInt(12, 0);
+		prepStatement.setDouble(13, 0);
 		
 
 		prepStatement.executeUpdate();
