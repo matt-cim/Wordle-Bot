@@ -238,6 +238,7 @@ public class Worden extends ListenerAdapter {
 	   			builder.addField("Best Score", statsArr[5], true);
 	   			builder.addField("Median", statsArr[6], true);
 	   			builder.addField("Mode", statsArr[7], true);
+	   			builder.addField("Standard Deviation", statsArr[8], true);
 	   			builder.addField("Wins", statsArr[9], true);
 	   			builder.addField("Last Wordle", statsArr[10], true);
 	   			builder.addField("Average", statsArr[11], true);
@@ -361,8 +362,7 @@ public class Worden extends ListenerAdapter {
 			}
 		}
 		
-		//TODO
-		// havent implemented average into data structures yet
+		// average
 		doubleSum = sum;
 		averageScore = doubleSum / noEmptyStrings.size();
 		statsArr[11] = averageScore.toString();
@@ -385,8 +385,6 @@ public class Worden extends ListenerAdapter {
 			statsArr[6] = median.toString();
 			
 			
-			// TODO test this, think i fixed it?
-			// mode
 			int count = 0, countCheck = 0;
 			Integer mode = 0;
 			
@@ -404,10 +402,16 @@ public class Worden extends ListenerAdapter {
 		}
 		
 
-	
-//		TODO
-//		// standard deviation
-//		Double winPercentage = Double.parseDouble(statsArr[8]);
+		// standard deviation
+        double varianceHelp = 0.0;
+        
+        for (Integer value : noEmptyStrings) {
+        	varianceHelp += Math.pow(value - averageScore, 2);
+        }
+
+        // standard deviation is the square root of variance
+        Double standardDeviation = Math.sqrt(varianceHelp / noEmptyStrings.size());
+        statsArr[8] = standardDeviation.toString();
 		
 		
 		// TODO now update database
