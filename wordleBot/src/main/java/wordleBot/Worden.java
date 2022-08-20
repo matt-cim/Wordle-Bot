@@ -54,6 +54,15 @@ import com.opencsv.CSVWriter;
 // games played, win percentage, current streak, max streak, guess distribution-> ones present on wordle
 //**************************************************
 
+// TODO
+// 1. create other commands like scoreboard etc.
+// 2. hints scraper that sends dm's
+// 3. style the embed builder and round values
+// 4. add funny quips to the i have recieved your wordle
+// 5. test test and test, correct values and multiple users
+// 6. add comments and beautify
+// 7. release
+
 
 
 public class Worden extends ListenerAdapter {
@@ -107,6 +116,7 @@ public class Worden extends ListenerAdapter {
 				String wins = String.valueOf(resultSet.getInt("wins"));
 				String lastWordle = String.valueOf(resultSet.getInt("last_wordle"));
 				String average = String.valueOf(resultSet.getDouble("average"));
+				
 				
 				String[] stats = {gamesPlayed, winPercentage, currentStreak, maxStreak, 
 									lastFourteen, bestScore, median, mode, standardDev, wins, lastWordle, average};
@@ -167,7 +177,7 @@ public class Worden extends ListenerAdapter {
         
         // adds "player" role
         event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById("994624121050763314")).queue();
-        System.out.println("Player" + playerName + " has role updated");
+        System.out.println("Player " + playerName + " has role updated");
 
         final String botResponse = String.format("Welcome %s to the %s",
         		playerName, event.getGuild().getName());
@@ -223,7 +233,11 @@ public class Worden extends ListenerAdapter {
 	   		
 	   		if (correctWordle.matches()) {
 	   			channel.sendMessage("I have recieved your Wordle").queue();
-	   			filter(correctWordle.group(1), correctWordle.group(2), playerName);
+	   			try {
+					filter(correctWordle.group(1), correctWordle.group(2), playerName);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 	   		}
 	   		else if (text.equals("!testicles")) {
 	   			String[] statsArr = playerInfo.get(playerName);
@@ -252,13 +266,9 @@ public class Worden extends ListenerAdapter {
 
 	
 	// decides how to update each of the stats given a new games' been played
-	private static void filter (String gameNumber, String score, String playerName) {
-		System.out.println(score);
-		
-		// TODO
-		// have to add myself into database before games start
-		// gonna want an initial check of if the gameNumber makes sense
-		
+	private static void filter (String gameNumber, String score, String playerName) throws SQLException {
+
+				
 		String[] statsArr = playerInfo.get(playerName);
 		boolean wonGame = !score.equals("X");
 		 
@@ -324,9 +334,14 @@ public class Worden extends ListenerAdapter {
 
 	
 		dataSetComputation(statsArr, score);	
+		
+		
+        // update database now that local hash has been updated
+  		MySQLConnection task = new MySQLConnection();
+   		task.updateDatabase(playerName, statsArr);
+   		task.closeConnection();	
 				
 		printHash();
-		//updateDatabaseGamesPlayed(String gamesPlayed, String playerName)
 	}
 	
 	
@@ -412,11 +427,6 @@ public class Worden extends ListenerAdapter {
         // standard deviation is the square root of variance
         Double standardDeviation = Math.sqrt(varianceHelp / noEmptyStrings.size());
         statsArr[8] = standardDeviation.toString();
-		
-		
-		// TODO now update database
-		// remember that user is added to database when they join the server ie their stats would be set if
-		// they previously had stuff in the server... wait dumbass you already accounted for this see line 179
 	}
 	 
 	private boolean playerExists (String playerName) { return playerInfo.containsKey(playerName); }

@@ -32,6 +32,7 @@ public class MySQLConnection {
 	public void addPlayerToDatabase(String playerName) throws SQLException {
 		String sql = "INSERT INTO info_catalog (name, games_played, win_percentage, current_streak, max_streak, last_fourteen, best_score, median, mode, standard_deviation, wins, last_wordle, average) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		//String sql = "INSERT INTO info_catalog VALUES (" + playerName + ", '0', '101.1', '0', '0', 'NULL', '0', '0', '0', '1001')";
+
 		
 		// using a prepared statement to avoid SQL injection attack
 		PreparedStatement prepStatement = connection.prepareStatement(sql);
@@ -56,19 +57,19 @@ public class MySQLConnection {
 		System.out.println("New player added to the database");
 	}
 
-	public void updateDatabaseGamesPlayed(String gamesPlayed, String playerName) throws SQLException {
-		// note have to find the games played first via the hash
-		// this sql is def wrong lmao, follow similar method as add player to databasse
-		String sql = "UPDATE nameOfTable " + "SET gamesPlayed = “ + gamesPlayed + “WHERE     name = " + playerName;
+	public void updateDatabase(String playerName, String[] statsArr) throws SQLException {
+
+		String sql = "UPDATE info_catalog SET games_played = " + statsArr[0] + ", win_percentage = " + statsArr[1] + 
+				", current_streak = " + statsArr[2] + ", max_streak = " + statsArr[3] + 
+				", last_fourteen = '" + statsArr[4] + "', best_score = " + statsArr[5] + ", median = " + statsArr[6] + 
+				", mode = " + statsArr[7] + ", standard_deviation = " + statsArr[8] + ", wins = " + statsArr[9] +
+				", last_wordle = " + statsArr[10] + ", average = " + statsArr[11] + "WHERE name = '" + playerName + "'";
 			
-		// prolly need a try catch for this
-		Statement statement;
+		PreparedStatement prepStatement = connection.prepareStatement(sql);
 		try {
-			statement = connection.createStatement();
-			statement.executeUpdate(sql);
-			statement.close();
+			prepStatement.executeUpdate(sql);
+			prepStatement.close();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
