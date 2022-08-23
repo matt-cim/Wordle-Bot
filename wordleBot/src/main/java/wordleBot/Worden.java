@@ -42,6 +42,16 @@ import com.mysql.cj.xdevapi.Statement;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+
+
 //**************************************************
 //	https://github.com/DV8FromTheWorld/JDA/wiki - wiki section for examples
 
@@ -56,11 +66,9 @@ import com.opencsv.CSVWriter;
 
 // TODO
 // 1. create other commands like scoreboard etc.
-//List<String> employeeByKey = new ArrayList<>(map.keySet());
-//Collections.sort(employeeByKey);
 // 2. hints scraper that sends dm's
 // 3. style the embed builder and round values
-// 4. add funny quips to the i have recieved your wordle
+// 4. add funny quips to the i have recieved your wordle-- seee desktop screenshot
 // 5. test test and test, correct values and multiple users
 // 6. add comments and beautify
 // 7. release
@@ -241,11 +249,12 @@ public class Worden extends ListenerAdapter {
 					e.printStackTrace();
 				}
 	   		}
-	   		else if (text.equals("!mystats")) {
+	   		else if (text.equalsIgnoreCase("!mystats")) {
 	   			String[] statsArr = playerInfo.get(playerName);
 	   			//begin embed stuff
 	   			EmbedBuilder builder = new EmbedBuilder();
 	   			builder.setTitle("Here are all your Wordle statistics");
+	   			builder.setThumbnail("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWhLZqeHfe_8OzK50hCU-ES4yJ-CEwaraB1A&usqp=CAU");
 	   		    builder.addField("Games Played", statsArr[0], true);
 	   		    builder.addField("Win Percentage", statsArr[1], true);
 	   		    builder.addField("Current Streak", statsArr[2], true);
@@ -262,26 +271,84 @@ public class Worden extends ListenerAdapter {
 //	   		    builder.setFooter("Text");
 	   			channel.sendMessageEmbeds(builder.build()).queue();
 	   		}
-	   		else if (text.equals("!scoreboard")) {
+	   		else if (text.equalsIgnoreCase("!scoreboard")) {
 	   			List<String> averageScores = new ArrayList<>();			
 	   			EmbedBuilder builder = new EmbedBuilder();
+	   			builder.setTitle("SCOREBOARD");
+	   			builder.setThumbnail("https://images.unsplash.com/photo-1652451764453-eff80b50f736?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8d29yZGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=400&q=60");
+	   			builder.setColor(Color.CYAN);
+
 	   			
 	   			for (String name: playerInfo.keySet()) {
 	   			    String[] fullArr = playerInfo.get(name);
-	   			    averageScores.add(fullArr[11]);
+	   			    // get rid of id after name
+	   			    averageScores.add(fullArr[11] + " -> " + name.substring(0, name.length() - 5));
 	   			}
+	   			averageScores.add("4.1 -> joe mama");
 	   			
+	   			averageScores.add("7.5 -> foo_bomb");
+	   			averageScores.add("1 -> oscar");
 	   			Collections.sort(averageScores);
 	   			
 	   			for (Integer i = 1; i <= averageScores.size(); i ++) {
 	   				builder.addField(i.toString() + ". ", averageScores.get(i - 1), true);
+	   				builder.addBlankField(false);
 	   			}
-	   		 builder.setColor(Color.CYAN);
-	   	  builder.setDescription("Thank for you taking the time to see how you can donate to the project! This project relies heavily upon user donations so every little helps! \uD83D\uDE0A");
-	   	  builder.addField("Patreon", "The most common way to donate is through our [Patreon page](https://www.patreon.com/flarebot)! Through here you can donate the amount you want and also get rewarded for it!", false);
-	   	  builder.addField("PayPal", "If you cannot donat", false);
-	   			
+		
 	   			channel.sendMessageEmbeds(builder.build()).queue();
+	   		}
+	   		else if (text.equalsIgnoreCase("!joke")) {
+	   			// https://jokes.one/api/joke/#java
+	   			// gets knock knock joke of day from that ^ API, using free service
+	   			// To maintain our service level we ratelimit the number of API calls.
+	   			// For public API calls this is 60 API calls a day with distribution of 5 calls an hour.
+	   			// For paid plans this limit is increased according to the service level described in the plan.
+	   			
+	   	        URL url = null;
+	   	        String findJokeFromJSON = new String();
+	   	        EmbedBuilder builder = new EmbedBuilder();
+	   	        
+	   	        
+				try {
+					url = new URL("https://api.jokes.one/jod?category=knock-knock");
+				} catch (MalformedURLException e1) {
+					e1.printStackTrace();
+				}
+
+	   	        try {
+	   	            //make connection
+	   	            HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+	   	            urlc.setRequestMethod("GET");
+	   	            // set the content type
+	   	            urlc.setRequestProperty("Content-Type", "application/json");
+	   	            urlc.setRequestProperty("X-JokesOne-Api-Secret", "YOUR API KEY HERE");
+	   	            urlc.setAllowUserInteraction(false);
+	   	            urlc.connect();
+
+	   	            //get result
+	   	            BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
+	   	            String l = null;
+	   	            while ((l=br.readLine())!=null) {
+	   	                //System.out.println(l);
+	   	                findJokeFromJSON = l;
+	   	            }
+	   	            br.close();
+	   	        } catch (Exception e){
+	   	            System.out.println("Error occured");
+	   	            System.out.println(e.toString());
+	   	        }
+	   	        
+	   	        int start = findJokeFromJSON.lastIndexOf("text") + 7, finish = findJokeFromJSON.indexOf("copyright") - 6;
+	   	        findJokeFromJSON.replaceAll("\n\r", " ");
+	   	        builder.setDescription(findJokeFromJSON.substring(start, finish));
+	   	        channel.sendMessageEmbeds(builder.build()).queue();
+	   		}
+	   		else if (text.equalsIgnoreCase("!hint")) {
+	   		    event.getAuthor().openPrivateChannel().complete().sendMessage("hello there").queue();
+	   		    
+	   		    
+	   		    
+	   		    
 	   		}
 	            	            
 		} 
