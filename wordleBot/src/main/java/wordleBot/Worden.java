@@ -56,6 +56,8 @@ import com.opencsv.CSVWriter;
 
 // TODO
 // 1. create other commands like scoreboard etc.
+//List<String> employeeByKey = new ArrayList<>(map.keySet());
+//Collections.sort(employeeByKey);
 // 2. hints scraper that sends dm's
 // 3. style the embed builder and round values
 // 4. add funny quips to the i have recieved your wordle
@@ -239,7 +241,7 @@ public class Worden extends ListenerAdapter {
 					e.printStackTrace();
 				}
 	   		}
-	   		else if (text.equals("!testicles")) {
+	   		else if (text.equals("!mystats")) {
 	   			String[] statsArr = playerInfo.get(playerName);
 	   			//begin embed stuff
 	   			EmbedBuilder builder = new EmbedBuilder();
@@ -258,6 +260,27 @@ public class Worden extends ListenerAdapter {
 	   			builder.addField("Average", statsArr[11], true);
 //	   		    builder.addBlankField(false);
 //	   		    builder.setFooter("Text");
+	   			channel.sendMessageEmbeds(builder.build()).queue();
+	   		}
+	   		else if (text.equals("!scoreboard")) {
+	   			List<String> averageScores = new ArrayList<>();			
+	   			EmbedBuilder builder = new EmbedBuilder();
+	   			
+	   			for (String name: playerInfo.keySet()) {
+	   			    String[] fullArr = playerInfo.get(name);
+	   			    averageScores.add(fullArr[11]);
+	   			}
+	   			
+	   			Collections.sort(averageScores);
+	   			
+	   			for (Integer i = 1; i <= averageScores.size(); i ++) {
+	   				builder.addField(i.toString() + ". ", averageScores.get(i - 1), true);
+	   			}
+	   		 builder.setColor(Color.CYAN);
+	   	  builder.setDescription("Thank for you taking the time to see how you can donate to the project! This project relies heavily upon user donations so every little helps! \uD83D\uDE0A");
+	   	  builder.addField("Patreon", "The most common way to donate is through our [Patreon page](https://www.patreon.com/flarebot)! Through here you can donate the amount you want and also get rewarded for it!", false);
+	   	  builder.addField("PayPal", "If you cannot donat", false);
+	   			
 	   			channel.sendMessageEmbeds(builder.build()).queue();
 	   		}
 	            	            
