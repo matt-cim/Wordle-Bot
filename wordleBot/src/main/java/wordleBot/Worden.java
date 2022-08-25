@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -304,9 +305,12 @@ public class Worden extends ListenerAdapter {
 	   			// For public API calls this is 60 API calls a day with distribution of 5 calls an hour.
 	   			// For paid plans this limit is increased according to the service level described in the plan.
 	   			
+	   		// personalize and add own comments
+	   			
 	   	        URL url = null;
 	   	        String findJokeFromJSON = new String();
 	   	        EmbedBuilder builder = new EmbedBuilder();
+	   	        String sanitized = new String();
 	   	        
 	   	        
 				try {
@@ -339,16 +343,45 @@ public class Worden extends ListenerAdapter {
 	   	        }
 	   	        
 	   	        int start = findJokeFromJSON.lastIndexOf("text") + 7, finish = findJokeFromJSON.indexOf("copyright") - 6;
-	   	        findJokeFromJSON.replaceAll("\n\r", " ");
-	   	        builder.setDescription(findJokeFromJSON.substring(start, finish));
+	   	        sanitized = findJokeFromJSON.substring(start, finish);
+	   	        sanitized = sanitized.replaceAll("\r", "").replaceAll("\n", "");
+	   	        builder.setDescription(sanitized);
 	   	        channel.sendMessageEmbeds(builder.build()).queue();
 	   		}
 	   		else if (text.equalsIgnoreCase("!hint")) {
-	   		    event.getAuthor().openPrivateChannel().complete().sendMessage("hello there").queue();
+	   			//event.getAuthor().openPrivateChannel().complete().sendMessage("hello there").queue();
+	   		    // personalize and add own comments
 	   		    
 	   		    
-	   		    
-	   		    
+	   		    //Instantiating the URL class
+	   			URL url = null;
+	   			try {
+	   				url = new URL("https://gamerjournalist.com/wordle-answers/");
+	   			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+	   			}
+	   			//Retrieving the contents of the specified page
+	   			Scanner sc = null;
+	   			try {
+	   				sc = new Scanner(url.openStream());
+	   			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+	   			}
+	   			//Instantiating the StringBuffer class to hold the result
+	   			StringBuffer sb = new StringBuffer();
+	   			while(sc.hasNext()) {
+	   				sb.append(sc.next());
+	   	         //System.out.println(sc.next());
+	   			}
+	   			//Retrieving the String from the String Buffer object
+	   			String result = sb.toString();
+	   			//Removing the HTML tags
+	   			result = result.replaceAll("<[^>]*>", "");
+	   			boolean postedAnswer = result.contains("Merriam-Webster");
+	   			String definition = result.substring(result.indexOf("as:") + 3, result.indexOf("Yesterday"));
+	   			event.getAuthor().openPrivateChannel().complete().sendMessage(definition).queue();
 	   		}
 	            	            
 		} 
