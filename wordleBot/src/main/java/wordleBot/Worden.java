@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,14 +67,14 @@ import java.net.MalformedURLException;
 //**************************************************
 
 // TODO
-// 1. create other commands like scoreboard etc.
-// 2. hints scraper that sends dm's
-// 3. style the embed builder and round values
-// 4. add funny quips to the i have recieved your wordle-- seee desktop screenshot
-// 5. test test and test, correct values and multiple users
+// 5. test for correct values, then release for gameplay
 // 6. add comments and beautify
-// 7. release
+// 7. release and github it (during github it, fake the hint dm)
 
+
+// DELETE FROM `info_catalog` WHERE 'name' <> 'mattcim#4465'
+
+// INSERT INTO `info_catalog` (`name`, `games_played`, `win_percentage`, `current_streak`, `max_streak`, `last_fourteen`, `best_score`, `median`, `mode`, `standard_deviation`, `wins`, `last_wordle`, `average`) VALUES ('mattcim#4465', '0', '0.0', '0', '0', 'NULL', '0', '0', '0', '0.0', '0', '0', '0')
 
 
 public class Worden extends ListenerAdapter {
@@ -81,6 +82,8 @@ public class Worden extends ListenerAdapter {
 	// main data structure for users and respective statistics	
 	private static HashMap<String, String[]> playerInfo = new HashMap<String, String[]>();
 	private static Connection connection = null;
+	public String[] quips = {"pathetic", "embarassing", "impressive", "fantastic", "disgrace of a",
+							"great", "smarty-pants", "spectacular", "tremendous", "horrible"};
 
 	
 	public static void main (String[] args) {
@@ -243,7 +246,9 @@ public class Worden extends ListenerAdapter {
 	   		Matcher correctWordle = wordleRegex.matcher(text);
 	   		
 	   		if (correctWordle.matches()) {
-	   			channel.sendMessage("I have recieved your Wordle").queue();
+	   			Random randQuip = new Random();
+	   			int randIndex = randQuip.nextInt(quips.length);
+	   			channel.sendMessage("I have recieved your " + quips[randIndex] + " Wordle").queue();
 	   			try {
 					filter(correctWordle.group(1), correctWordle.group(2), playerName);
 				} catch (SQLException e) {
@@ -257,17 +262,17 @@ public class Worden extends ListenerAdapter {
 	   			builder.setTitle("Here are all your Wordle statistics");
 	   			builder.setThumbnail("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWhLZqeHfe_8OzK50hCU-ES4yJ-CEwaraB1A&usqp=CAU");
 	   		    builder.addField("Games Played", statsArr[0], true);
-	   		    builder.addField("Win Percentage", statsArr[1], true);
+	   		    builder.addField("Win Percentage", statsArr[1].substring(0, statsArr[1].indexOf(".") + 2), true);
 	   		    builder.addField("Current Streak", statsArr[2], true);
 	   		    builder.addField("Max Streak", statsArr[3], true);
 	   			builder.addField("History", statsArr[4], true);
 	   			builder.addField("Best Score", statsArr[5], true);
 	   			builder.addField("Median", statsArr[6], true);
 	   			builder.addField("Mode", statsArr[7], true);
-	   			builder.addField("Standard Deviation", statsArr[8], true);
+	   			builder.addField("Standard Deviation", statsArr[8].substring(0, statsArr[8].indexOf(".") + 2), true);
 	   			builder.addField("Wins", statsArr[9], true);
 	   			builder.addField("Last Wordle", statsArr[10], true);
-	   			builder.addField("Average", statsArr[11], true);
+	   			builder.addField("Average", statsArr[11].substring(0, statsArr[11].indexOf(".") + 2), true);
 //	   		    builder.addBlankField(false);
 //	   		    builder.setFooter("Text");
 	   			channel.sendMessageEmbeds(builder.build()).queue();
@@ -283,7 +288,7 @@ public class Worden extends ListenerAdapter {
 	   			for (String name: playerInfo.keySet()) {
 	   			    String[] fullArr = playerInfo.get(name);
 	   			    // get rid of id after name
-	   			    averageScores.add(fullArr[11] + " -> " + name.substring(0, name.length() - 5));
+	   			    averageScores.add(fullArr[11].substring(0, fullArr[11].indexOf(".") + 2) + " -> " + name.substring(0, name.length() - 5));
 	   			}
 	   			averageScores.add("4.1 -> joe mama");
 	   			
@@ -338,13 +343,13 @@ public class Worden extends ListenerAdapter {
 	   	            }
 	   	            br.close();
 	   	        } catch (Exception e){
-	   	            System.out.println("Error occured");
+	   	        	channel.sendMessage("Ah man! we have run out of requests to the Jokes API, try in an hour").queue();
 	   	            System.out.println(e.toString());
 	   	        }
 	   	        
 	   	        int start = findJokeFromJSON.lastIndexOf("text") + 7, finish = findJokeFromJSON.indexOf("copyright") - 6;
 	   	        sanitized = findJokeFromJSON.substring(start, finish);
-	   	        sanitized = sanitized.replaceAll("\r", "").replaceAll("\n", "");
+	   	        sanitized = sanitized.replace("\\n", " ").replace("\\r", " ");
 	   	        builder.setDescription(sanitized);
 	   	        channel.sendMessageEmbeds(builder.build()).queue();
 	   		}
@@ -463,8 +468,9 @@ public class Worden extends ListenerAdapter {
   		MySQLConnection task = new MySQLConnection();
    		task.updateDatabase(playerName, statsArr);
    		task.closeConnection();	
-				
-		printHash();
+   		
+   		// delete this before release
+   		printHash();
 	}
 	
 	
