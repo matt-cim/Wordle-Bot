@@ -3,16 +3,14 @@ package wordleBot;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public class MySQLConnection {
 	
 	private static Connection connection = null;
 	
 	// default constructor, establishes connection
-	public MySQLConnection () throws SQLException {
+	public MySQLConnection() throws SQLException {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			String dbURL = "jdbc:mysql://customer_338853_wordendb:Ovechkin8$$@na02-sql.pebblehost.com/customer_338853_wordendb";
@@ -27,12 +25,10 @@ public class MySQLConnection {
 	}
 	
 	
-	// would execute this if player DNE in hash and joins channel, sets default stats
+	// executed if the player DNE in hash and joins channel, sets default statistics
 	// note want this when a new player JOINS, NOT sends first message
 	public void addPlayerToDatabase(String playerName) throws SQLException {
 		String sql = "INSERT INTO info_catalog (name, games_played, win_percentage, current_streak, max_streak, last_fourteen, best_score, median, mode, standard_deviation, wins, last_wordle, average) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-		//String sql = "INSERT INTO info_catalog VALUES (" + playerName + ", '0', '101.1', '0', '0', 'NULL', '0', '0', '0', '1001')";
-
 		
 		// using a prepared statement to avoid SQL injection attack
 		PreparedStatement prepStatement = connection.prepareStatement(sql);
@@ -50,7 +46,6 @@ public class MySQLConnection {
 		prepStatement.setInt(12, 0);
 		prepStatement.setDouble(13, 0);
 		
-
 		prepStatement.executeUpdate();
 		prepStatement.close();
 
@@ -58,7 +53,7 @@ public class MySQLConnection {
 	}
 
 	public void updateDatabase(String playerName, String[] statsArr) throws SQLException {
-
+		// this SQL query only affects the row of the specified player name 
 		String sql = "UPDATE info_catalog SET games_played = " + statsArr[0] + ", win_percentage = " + statsArr[1] + 
 				", current_streak = " + statsArr[2] + ", max_streak = " + statsArr[3] + 
 				", last_fourteen = '" + statsArr[4] + "', best_score = " + statsArr[5] + ", median = " + statsArr[6] + 
@@ -76,11 +71,10 @@ public class MySQLConnection {
 	
 	}
 	
-
+	// closes connection to database
 	public void closeConnection() throws SQLException {
 		connection.close();
 	}
-
 
 
 }

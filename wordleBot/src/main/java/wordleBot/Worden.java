@@ -1,30 +1,19 @@
 package wordleBot;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.ChannelType;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
-import net.dv8tion.jda.api.entities.MessageHistory;
 import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.awt.Color;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -37,44 +26,21 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nonnull;
-
-import com.mysql.cj.xdevapi.Statement;
-//https://zetcode.com/java/opencsv/
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
-
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 
 
 //**************************************************
-//	https://github.com/DV8FromTheWorld/JDA/wiki - wiki section for examples
-
-//	add roles on join
-
-//	actual javadoc for JDA
-
-// hash map- key is userID value is all stats boom
-
-// games played, win percentage, current streak, max streak, guess distribution-> ones present on wordle
+//	Matthew Cimerola 2022
 //**************************************************
 
-// TODO
-// 5. test for correct values, then release for gameplay
-// 6. add comments and beautify
-// 7. release and github it (during github it, fake the hint dm)
-
-
+// SQL code 
 // DELETE FROM `info_catalog` WHERE 'name' <> 'mattcim#4465'
-
-// INSERT INTO `info_catalog` (`name`, `games_played`, `win_percentage`, `current_streak`, `max_streak`, `last_fourteen`, `best_score`, `median`, `mode`, `standard_deviation`, `wins`, `last_wordle`, `average`) VALUES ('mattcim#4465', '0', '0.0', '0', '0', 'NULL', '0', '0', '0', '0.0', '0', '0', '0')
+// INSERT INTO `info_catalog` (`name`, `games_played`, `win_percentage`, `current_streak`, `max_streak`, `last_fourteen`, `best_score`, `median`, `mode`, `standard_deviation`, `wins`, `last_wordle`, `average`) 
+// VALUES ('mattcim#4465', '0', '0.0', '0', '0', 'NULL', '0', '0', '0', '0.0', '0', '0', '0')
 
 
 public class Worden extends ListenerAdapter {
@@ -91,7 +57,6 @@ public class Worden extends ListenerAdapter {
 		// gets every column from the table
 		String sql = "SELECT * " + "FROM info_catalog";
 
-	
 		// using create default because otherwise would have to specify intent ex "listening"
 		try {
 			JDABuilder.createDefault("OTQ2NjAzNDQ2ODc2OTI1OTUz.G-FB97.G07JfmKBxUOaWceZhRsotba5NGlot5FmEV4ZpY")
@@ -101,11 +66,8 @@ public class Worden extends ListenerAdapter {
 		}
 		
 		
-		// https://stackoverflow.com/questions/8146793/no-suitable-driver-found-for-jdbcmysql-localhost3306-mysql
-		// https://stackoverflow.com/questions/17484764/java-lang-classnotfoundexception-com-mysql-jdbc-driver-in-eclipse
-		// https://www.youtube.com/watch?v=BjfqKK24Ruk
-		// 	loading the driver
 		try {
+			// loading the driver for the connection to MySQl
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			String dbURL = "jdbc:mysql://customer_338853_wordendb:Ovechkin8$$@na02-sql.pebblehost.com/customer_338853_wordendb";
 			String username = "customer_338853_wordendb";
@@ -129,13 +91,10 @@ public class Worden extends ListenerAdapter {
 				String standardDev = String.valueOf(resultSet.getDouble("standard_deviation"));
 				String wins = String.valueOf(resultSet.getInt("wins"));
 				String lastWordle = String.valueOf(resultSet.getInt("last_wordle"));
-				String average = String.valueOf(resultSet.getDouble("average"));
-				
+				String average = String.valueOf(resultSet.getDouble("average"));			
 				
 				String[] stats = {gamesPlayed, winPercentage, currentStreak, maxStreak, 
 									lastFourteen, bestScore, median, mode, standardDev, wins, lastWordle, average};
-				
-				
 				playerInfo.put(playerName, stats);
 			}
 
@@ -149,19 +108,17 @@ public class Worden extends ListenerAdapter {
 			e.printStackTrace();
 		}	
 		
-		
 		System.out.println("Main finished running");
-		
 		printHash();
 	}
 	
 	
-	// have not yet seen it to be necessary
+	// useful tool for debugging bot's status
 	@Override
-	public void onReady(ReadyEvent e) { System.out.println("Worden bot is up and running!"); }
+	public void onReady (ReadyEvent e) { System.out.println("Worden bot is up and running!"); }
 	
 	
-	// helpful when making sure Query took place successfully
+	// making sure Query took place successfully
 	private static void printHash () {
 		
 		for (String name: playerInfo.keySet()) {
@@ -175,8 +132,7 @@ public class Worden extends ListenerAdapter {
 	
 	// new player joins server & channel, respond and auto assign role
 	@Override
-	public void onGuildMemberJoin(GuildMemberJoinEvent event) {
-		
+	public void onGuildMemberJoin (GuildMemberJoinEvent event) {
 		
         final List<TextChannel> channelList = event.getGuild().getTextChannelsByName
         												("let-the-games-begin", true);
@@ -193,14 +149,14 @@ public class Worden extends ListenerAdapter {
         event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById("994624121050763314")).queue();
         System.out.println("Player " + playerName + " has role updated");
 
-        final String botResponse = String.format("Welcome %s to the %s",
-        		playerName, event.getGuild().getName());
+        final String botResponse = String.format("Welcome %s to the %s", playerName, event.getGuild().getName());
 
         derivedChannel.sendMessage(botResponse).queue();
         System.out.println("Player " + playerName + " has joined");
         
         
-        // init. default stats for this new player, only if person is not in hash (hasnt left server then joined again)
+        // initialize default statistics for this new player, only if person is not in the hash 
+        // or (hasn't left server then joined again)
         try {
 			if (!playerExists(playerName)) {
 				initNewPlayer(playerName);
@@ -211,8 +167,8 @@ public class Worden extends ListenerAdapter {
 	}
 
 	
-	// init -> initialize
-	public static void initNewPlayer(String playerName) throws SQLException {
+	// gives new players default values for each statistic
+	public static void initNewPlayer (String playerName) throws SQLException {
 		
    		String[] defaultStats = {"0", "0.0", "0", "0", "NULL", "0", "0", "0", "0.0", "0", "0", "0.0"};
    		playerInfo.put(playerName, defaultStats);
@@ -224,7 +180,6 @@ public class Worden extends ListenerAdapter {
 	}
 	
 
-	
 	 //	recognizes a message has been set in the appropriate channel and responds accordingly
 	@Override
 	public void onMessageReceived (MessageReceivedEvent event) {
@@ -234,7 +189,6 @@ public class Worden extends ListenerAdapter {
 		Pattern regex = Pattern.compile(".*let-the-games-begin.*");
 		Matcher correctChannel = regex.matcher(channel.getName());
 
-	
 		// message from non-bot user
 		if (!event.getAuthor().isBot() && correctChannel.matches()) {
 		
@@ -257,9 +211,10 @@ public class Worden extends ListenerAdapter {
 	   		}
 	   		else if (text.equalsIgnoreCase("!mystats")) {
 	   			String[] statsArr = playerInfo.get(playerName);
-	   			//begin embed stuff
+	   			// sending the embedded messages
 	   			EmbedBuilder builder = new EmbedBuilder();
 	   			builder.setTitle("Here are all your Wordle statistics");
+	   			// URl is to the picture
 	   			builder.setThumbnail("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWhLZqeHfe_8OzK50hCU-ES4yJ-CEwaraB1A&usqp=CAU");
 	   		    builder.addField("Games Played", statsArr[0], true);
 	   		    builder.addField("Win Percentage", statsArr[1].substring(0, statsArr[1].indexOf(".") + 2), true);
@@ -273,8 +228,6 @@ public class Worden extends ListenerAdapter {
 	   			builder.addField("Wins", statsArr[9], true);
 	   			builder.addField("Last Wordle", statsArr[10], true);
 	   			builder.addField("Average", statsArr[11].substring(0, statsArr[11].indexOf(".") + 2), true);
-//	   		    builder.addBlankField(false);
-//	   		    builder.setFooter("Text");
 	   			channel.sendMessageEmbeds(builder.build()).queue();
 	   		}
 	   		else if (text.equalsIgnoreCase("!scoreboard")) {
@@ -287,15 +240,13 @@ public class Worden extends ListenerAdapter {
 	   			
 	   			for (String name: playerInfo.keySet()) {
 	   			    String[] fullArr = playerInfo.get(name);
-	   			    // get rid of id after name
+	   			    // get rid of id after name before sending
 	   			    averageScores.add(fullArr[11].substring(0, fullArr[11].indexOf(".") + 2) + " -> " + name.substring(0, name.length() - 5));
 	   			}
-	   			averageScores.add("4.1 -> joe mama");
 	   			
-	   			averageScores.add("7.5 -> foo_bomb");
-	   			averageScores.add("1 -> oscar");
 	   			Collections.sort(averageScores);
 	   			
+	   			// format the messages by parsing each String
 	   			for (Integer i = 1; i <= averageScores.size(); i ++) {
 	   				builder.addField(i.toString() + ". ", averageScores.get(i - 1), true);
 	   				builder.addBlankField(false);
@@ -304,20 +255,12 @@ public class Worden extends ListenerAdapter {
 	   			channel.sendMessageEmbeds(builder.build()).queue();
 	   		}
 	   		else if (text.equalsIgnoreCase("!joke")) {
-	   			// https://jokes.one/api/joke/#java
-	   			// gets knock knock joke of day from that ^ API, using free service
-	   			// To maintain our service level we ratelimit the number of API calls.
-	   			// For public API calls this is 60 API calls a day with distribution of 5 calls an hour.
-	   			// For paid plans this limit is increased according to the service level described in the plan.
-	   			
-	   		// personalize and add own comments
-	   			
-	   	        URL url = null;
+	   			URL url = null;
 	   	        String findJokeFromJSON = new String();
 	   	        EmbedBuilder builder = new EmbedBuilder();
 	   	        String sanitized = new String();
 	   	        
-	   	        
+	   	        // attempting to connect to the api
 				try {
 					url = new URL("https://api.jokes.one/jod?category=knock-knock");
 				} catch (MalformedURLException e1) {
@@ -325,7 +268,7 @@ public class Worden extends ListenerAdapter {
 				}
 
 	   	        try {
-	   	            //make connection
+	   	            // make connection
 	   	            HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
 	   	            urlc.setRequestMethod("GET");
 	   	            // set the content type
@@ -334,19 +277,21 @@ public class Worden extends ListenerAdapter {
 	   	            urlc.setAllowUserInteraction(false);
 	   	            urlc.connect();
 
-	   	            //get result
 	   	            BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
 	   	            String l = null;
-	   	            while ((l=br.readLine())!=null) {
-	   	                //System.out.println(l);
+	   	            
+	   	            // parse every line from the JSON request
+	   	            while ((l = br.readLine())!= null) {
 	   	                findJokeFromJSON = l;
 	   	            }
 	   	            br.close();
-	   	        } catch (Exception e){
+	   	        } catch (Exception e) {
+	   	        	// API limits the number of requests per hour thus why this is necessary
 	   	        	channel.sendMessage("Ah man! we have run out of requests to the Jokes API, try in an hour").queue();
 	   	            System.out.println(e.toString());
 	   	        }
 	   	        
+	   	        // extracting the joke from the JSON
 	   	        int start = findJokeFromJSON.lastIndexOf("text") + 7, finish = findJokeFromJSON.indexOf("copyright") - 6;
 	   	        sanitized = findJokeFromJSON.substring(start, finish);
 	   	        sanitized = sanitized.replace("\\n", " ").replace("\\r", " ");
@@ -354,37 +299,31 @@ public class Worden extends ListenerAdapter {
 	   	        channel.sendMessageEmbeds(builder.build()).queue();
 	   		}
 	   		else if (text.equalsIgnoreCase("!hint")) {
-	   			//event.getAuthor().openPrivateChannel().complete().sendMessage("hello there").queue();
-	   		    // personalize and add own comments
-	   		    
-	   		    
-	   		    //Instantiating the URL class
 	   			URL url = null;
+	   			// attempt to connect to the website, then scrape for the hint of the day
 	   			try {
 	   				url = new URL("https://gamerjournalist.com/wordle-answers/");
 	   			} catch (MalformedURLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 	   			}
+	   			
 	   			//Retrieving the contents of the specified page
-	   			Scanner sc = null;
+	   			Scanner scanner = null;
 	   			try {
-	   				sc = new Scanner(url.openStream());
+	   				scanner = new Scanner(url.openStream());
 	   			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 	   			}
-	   			//Instantiating the StringBuffer class to hold the result
+	   			
+	   			// store the result in the string buffer
 	   			StringBuffer sb = new StringBuffer();
-	   			while(sc.hasNext()) {
-	   				sb.append(sc.next());
-	   	         //System.out.println(sc.next());
+	   			while(scanner.hasNext()) {
+	   				sb.append(scanner.next());
 	   			}
-	   			//Retrieving the String from the String Buffer object
+	   			
 	   			String result = sb.toString();
-	   			//Removing the HTML tags
+	   			// getting rid of the HTML tags
 	   			result = result.replaceAll("<[^>]*>", "");
-	   			boolean postedAnswer = result.contains("Merriam-Webster");
 	   			String definition = result.substring(result.indexOf("as:") + 3, result.indexOf("Yesterday"));
 	   			event.getAuthor().openPrivateChannel().complete().sendMessage(definition).queue();
 	   		}
@@ -393,7 +332,7 @@ public class Worden extends ListenerAdapter {
 	 }
 
 	
-	// decides how to update each of the stats given a new games' been played
+	// decides how to update each of the statistics given a new games' been played
 	private static void filter (String gameNumber, String score, String playerName) throws SQLException {
 
 				
@@ -427,7 +366,7 @@ public class Worden extends ListenerAdapter {
 		}
 		
 				
-		// current streak & max streak, needed to add another column- last wordle
+		// current streak & max streak, needed to add another column
 		Integer lastWordle = Integer.parseInt(statsArr[10]);
 		Integer thisWordle = Integer.parseInt(gameNumber);
 		statsArr[10] = gameNumber;
@@ -460,17 +399,13 @@ public class Worden extends ListenerAdapter {
 			}
 		}
 
-	
+		// requires more complex computation
 		dataSetComputation(statsArr, score);	
-		
 		
         // update database now that local hash has been updated
   		MySQLConnection task = new MySQLConnection();
    		task.updateDatabase(playerName, statsArr);
    		task.closeConnection();	
-   		
-   		// delete this before release
-   		printHash();
 	}
 	
 	
@@ -487,6 +422,7 @@ public class Worden extends ListenerAdapter {
 			statsArr[4] = currStats;
 		}
 		
+		// get rid of the failed attempts
 		String noNullScores = new String();
 		noNullScores = statsArr[4].replaceAll("X","");
 		
@@ -498,6 +434,7 @@ public class Worden extends ListenerAdapter {
 		Double averageScore;
 		List<Integer> noEmptyStrings = new ArrayList<>();
 		
+		// white space also needs to be excluded
 		for (int i = 0; i < splitScores.length; i ++) {
 			if (!splitScores[i].equals("X") && !splitScores[i].equals("")) {
 				singleScore = Integer.parseInt(splitScores[i]);
@@ -511,10 +448,8 @@ public class Worden extends ListenerAdapter {
 		averageScore = doubleSum / noEmptyStrings.size();
 		statsArr[11] = averageScore.toString();
 		
-		
-		// only do these stats for wins meaning dont include the X shit
-		// need to add an average score column
 		Collections.sort(noEmptyStrings);
+		
 		// median
 		if (noEmptyStrings.size() > 0) {
 			int medianValue = 0; 
@@ -528,7 +463,7 @@ public class Worden extends ListenerAdapter {
 			Integer median = medianValue;
 			statsArr[6] = median.toString();
 			
-			
+			// mode
 			int count = 0, countCheck = 0;
 			Integer mode = 0;
 			
@@ -560,8 +495,7 @@ public class Worden extends ListenerAdapter {
 	 
 	private boolean playerExists (String playerName) { return playerInfo.containsKey(playerName); }
 	 
-	 
+	// helper function
 	private void clearHash () { playerInfo.clear(); }
 	 
-	
 }
