@@ -4,7 +4,7 @@ This Discord Wordle Bot (made utilizing the Java Discord API- JDA) is ran on a P
 show the read me channel
 
 ## Database Connection
-When the main function is ran the "MySQLConnection" class establishes a connection to the database and reads the data into a local **Hash Map** where the key is the players name (always unique) and the values are the associated statistics. I made sure to use prepared statements when querying this data as this is a good practice to avoid SQL injection vulnerabilities. Each time a player sends their Wordle, or a new member joins, the database connection is established once again and is updated accordingly.
+When the main function is ran the "MySQLConnection" class establishes a connection to the database and reads the data into a local **Hash Map** where the key is the players name (always unique) and the values are the associated statistics. I made sure to use prepared statements when querying this data as this is a good practice to avoid **SQL injection vulnerabilities**. Each time a player sends their Wordle, or a new member joins, the database connection is established once again and is updated accordingly.
 
 show screenshot of database
 
