@@ -13,9 +13,9 @@ public class MySQLConnection {
 	public MySQLConnection() throws SQLException {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			String dbURL = "jdbc:mysql://customer_338853_wordendb:Ovechkin8$$@na02-sql.pebblehost.com/customer_338853_wordendb";
-			String username = "customer_338853_wordendb";
-			String password = "Ovechkin8$$";
+			String dbURL = "jdbc:mysql://REST_OF_URL";
+			String username = "USERNAME";
+			String password = "PASSWORD";
 			connection = DriverManager.getConnection(dbURL, username, password);
 			
 		} catch (ClassNotFoundException e) {
