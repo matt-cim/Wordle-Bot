@@ -59,7 +59,7 @@ public class Worden extends ListenerAdapter {
 
 		// using create default because otherwise would have to specify intent ex "listening"
 		try {
-			JDABuilder.createDefault("OTQ2NjAzNDQ2ODc2OTI1OTUz.G-FB97.G07JfmKBxUOaWceZhRsotba5NGlot5FmEV4ZpY")
+			JDABuilder.createDefault("BOT_TOKEN")
 			.enableIntents(GatewayIntent.GUILD_MEMBERS).addEventListeners(new Worden()).build();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -69,9 +69,9 @@ public class Worden extends ListenerAdapter {
 		try {
 			// loading the driver for the connection to MySQl
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			String dbURL = "jdbc:mysql://customer_338853_wordendb:Ovechkin8$$@na02-sql.pebblehost.com/customer_338853_wordendb";
-			String username = "customer_338853_wordendb";
-			String password = "Ovechkin8$$";
+			String dbURL = "jdbc:mysql://REST_OF_URL";
+			String username = "USERNAME";
+			String password = "PASSWORD";
 			connection = DriverManager.getConnection(dbURL, username, password);
 			
 			java.sql.Statement statement = connection.createStatement();
