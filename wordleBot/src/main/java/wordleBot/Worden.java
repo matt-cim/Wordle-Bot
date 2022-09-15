@@ -191,9 +191,8 @@ public class Worden extends ListenerAdapter {
 
 		// message from non-bot user
 		if (!event.getAuthor().isBot() && correctChannel.matches()) {
-		
 			String text = event.getMessage().getContentRaw(); 
-	        String playerName = event.getMember().getUser().getAsTag();  
+	        String playerName = event.getMember().getUser().getAsTag();
 	            
 	        // match standard Wordle format
 	   		Pattern wordleRegex = Pattern.compile("[W|w]ordle (\\d+) (1|2|3|4|5|6|X)\\/6\\*?(\\n.*){2,}");
